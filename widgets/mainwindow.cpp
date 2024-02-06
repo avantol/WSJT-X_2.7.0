@@ -2380,7 +2380,7 @@ void MainWindow::on_autoButton_clicked (bool checked)   //manually or as result 
   debugToFile(QString{"on_autoButton_clicked    by operator:%1"}.arg(m_enableButtonNotify));
   debugToFile(QString{"             checked:%1 listenMode:%2"}.arg(checked).arg(m_listenMode));
 
-  if (checked && m_enableButtonNotify) {    //avt 2/4/24
+  if (checked && m_enableButtonNotify && is_externalCtrlMode()) {    //avt 2/5/24
     //don't want to enable tx now, will be done later by controller
     debugToFile(QString{"             ignoring tx enable click by operator"});  //avt 1/28/24
   } else {
