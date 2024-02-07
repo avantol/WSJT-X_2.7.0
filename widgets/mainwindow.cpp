@@ -2389,12 +2389,12 @@ void MainWindow::on_autoButton_clicked (bool checked)   //manually or as result 
 
   //report only if clicked by operator
   if (is_externalCtrlMode() && m_enableButtonNotify) {  //by operator, not fron a controller command
+    m_txEnableClk = false;  //avt 2/6/24
     statusUpdate ();        //avt 1/28/24 send update with m_txEnableClk false to defeat same-message check
     m_txEnableClk = true;   //avt 1/28/24 tx enabled state synchronous with tx enable click
     debugToFile(QString{"             statusUpdate, m_txEnableClk:1 m_auto:%1"}.arg(m_auto));  //avt 1/28/24
     statusUpdate ();        //avt 1/28/24 send update with m_txEnableClk true
     m_txEnableClk = false;  //avt 1/28/24
-    statusUpdate ();        //avt 1/23/24
   }
 }
 
@@ -5817,9 +5817,11 @@ void MainWindow::doubleClickOnCall(Qt::KeyboardModifiers modifiers)
       return;     //avt 11/1/23 band is invalid 
     }  
   }                         //avt 1/1/21
-  statusUpdate();             //avt 12/20/21 send msg w/m_dblClk false to defeat same-message check
+  m_dblClk = false;
+  statusUpdate();       //avt 12/20/21 send msg w/m_dblClk false to defeat same-message check
   setCallPriority(call);
-  statusUpdate();             //avt 1/1/21 make sure UDP listener notified of this event 
+  m_dblClk = true;      //avt 2/6/24 one-shot event notification
+  statusUpdate();       //avt 1/1/21 make sure UDP listener notified of this event 
   m_dblClk = false;     //avt 12/20/21 one-shot event notification
   m_checkCmd = "";
 
@@ -7008,8 +7010,10 @@ void MainWindow::on_dxGridEntry_textChanged (QString const& grid)
 void MainWindow::on_genStdMsgsPushButton_clicked()         //genStdMsgs button
 {
   genStdMsgs(m_rpt);
+  m_dblClk = false;
   statusUpdate();             //avt 12/20/21 send msg w/m_dblClk false to defeat same-message check
   setCallPriority(m_dxCall);
+  m_dblClk = true;     //avt 12/20/21 one-shot event notification
   statusUpdate();       //avt 1/1/21
   m_dblClk = false;     //avt 12/20/21 one-shot event notification
   m_checkCmd = "";
@@ -8433,6 +8437,7 @@ void MainWindow::on_stopTxButton_clicked()                    //Stop Tx
 
   //report only if clicked by operator
   if (is_externalCtrlMode() && m_enableButtonNotify) {  //avt 1/23/24  only report clicks by user, not as result of command
+    m_txHaltClk = false;    //avt 2/6/24
     statusUpdate();         //avt 12/20/21 send msg w/m_txHaltClk false to defeat same-message check
     m_txHaltClk = true;     //avt 12/18/21 tx enabled state synchronous with tx halt click
     debugToFile(QString{"             statusUpdate, m_txHaltClk:1 m_auto:%1"}.arg(m_auto));   //avt 2/2/24
@@ -11391,5 +11396,4 @@ void MainWindow::setCallPriority(QString call)
     //debugToFile(QString {"  callB4onBand:%1 countryB4onBand:%2 continentB4onBand:%3 entity_name:%4"}.arg(callB4onBand).arg(countryB4onBand).arg(continentB4onBand).arg(looked_up.entity_name));
 
     m_checkCmd = QString {"%1,%2,%3,%4,%5"}.arg(call).arg(!callB4).arg(!countryB4onBand).arg(!countryB4).arg(looked_up.entity_name);
-    m_dblClk = true;
 }
