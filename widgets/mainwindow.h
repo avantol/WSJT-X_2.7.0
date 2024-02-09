@@ -623,7 +623,6 @@ private:
   QLabel auto_tx_label;
   QLabel band_hopping_label;
   QLabel ndecodes_label;
-  QLabel tx_enable_label;     //avt 2/8/24
   QProgressBar progressBar;
   QLabel watchdog_label;
 

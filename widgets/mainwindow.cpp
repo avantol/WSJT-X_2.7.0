@@ -2410,9 +2410,9 @@ void MainWindow::process_autoButton (bool checked)   //manually or by controller
 
   if (is_externalCtrlMode()) {
     if (m_auto) {     //avt 2/8/24
-      tx_enable_label.setStyleSheet ("QLabel{background-color: #ff5050}");
+      ui->label->setStyleSheet ("QLabel{color: #3b33ff}");
     } else {
-      tx_enable_label.setStyleSheet ("QLabel{background-color: #f0f0f0}");
+      ui->label->setStyleSheet ("QLabel{color: #000000}");
     }
   }
   
@@ -2892,11 +2892,6 @@ void MainWindow::createStatusBar()                           //createStatusBar
 
   statusBar ()->addPermanentWidget (&watchdog_label);
   update_watchdog_label ();
-
-  tx_enable_label.setAlignment (Qt::AlignHCenter);    //avt 2/8/24
-  tx_enable_label.setMinimumSize (QSize {0, 18});
-  tx_enable_label.setFrameStyle (QFrame::Panel | QFrame::Sunken);
-  statusBar()->addPermanentWidget (&tx_enable_label);
 }
 
 void MainWindow::setup_status_bar (bool vhf)
@@ -11324,7 +11319,6 @@ void MainWindow::initExternalCtrl()    //avt 12/5/20
     ui->respondComboBox->setVisible(false); //avt
     ui->respondComboBox->setCurrentIndex(0); //avt
    ui->pbBestSP->setEnabled(false);  //avt 2/28/21
-   tx_enable_label.setVisible(true);    //avt 2/8/24
   } else {
     if (ui->cbAutoSeq-isVisible()) ui->cbAutoSeq->setEnabled(true); //avt 11/22/20
     if (ui->txFirstCheckBox-isVisible()) ui->txFirstCheckBox->setEnabled(true);  //avt 2/1/24
@@ -11339,7 +11333,7 @@ void MainWindow::initExternalCtrl()    //avt 12/5/20
     m_txEnableClk = false;  //avt 1/28/24
     m_enableButtonNotify = true;  //avt 1/23/24
     m_listenMode = false; //avt 2/1/24
-    tx_enable_label.setVisible(false);    //avt 2/8/24
+    ui->label->setStyleSheet ("QLabel{color: #000000}");
   }
 }
 
