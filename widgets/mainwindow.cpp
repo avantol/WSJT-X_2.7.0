@@ -2410,7 +2410,7 @@ void MainWindow::process_autoButton (bool checked)   //manually or by controller
 
   if (is_externalCtrlMode()) {
     if (m_auto) {     //avt 2/8/24
-      ui->label->setStyleSheet ("QLabel{color: #3b33ff}");
+      ui->label->setStyleSheet ("QLabel{color: #0000ff}");    //avt 2/13/24
     } else {
       ui->label->setStyleSheet ("QLabel{color: #000000}");
     }
@@ -5208,28 +5208,12 @@ void MainWindow::guiUpdate()
         useNextCall();
       } else {
         if (!is_externalCtrlMode() && m_mode != "MSK144") auto_tx_mode (false);    //avt 11/20/20 leave Tx enabled fo UDP listener next action 12/12/21 MSK144 not under external ctrl
-        if(b) {        //avt 11/2020 UDP listener requires CALLING phase
-          m_bCallingCQ = true;  //allows tail-enders to be picked up
-          m_ntx = 6;
-          m_bAutoReply = ui->respondComboBox->isVisible() && ui->respondComboBox->currentIndex() > 0;
-          //debugToFile(QString{"guiUpdate:   m_bAutoReply:%1 m_bCallingCQ:%2"}.arg(m_bAutoReply).arg(m_bCallingCQ));   //avt 1/4/24
-          m_QSOProgress = CALLING;
-          ui->txrb6->setChecked(true);
-        }
+        // avt 7/18/22 deletion here 2/13/24
         statusUpdate();      //avt 11/17/20 so that UDP listener is notified
       }
     }
 
-    /* avt 7/18/22 deletion
-    if(m_config.id_interval () >0) {
-      int nmin=(m_sec0-m_secID)/60;
-      if(m_sec0<m_secID) nmin=m_config.id_interval();
-      if(nmin >= m_config.id_interval()) {
-        icw[0]=m_ncw;
-        m_secID=m_sec0;
-      }
-    }
-    */
+    // avt 7/18/22 deletion here
 
     if ((m_currentMessageType < 6 || 7 == m_currentMessageType)
         && msg_parts.length() >= 3
