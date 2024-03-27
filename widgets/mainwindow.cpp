@@ -5196,7 +5196,7 @@ void MainWindow::guiUpdate()
         }
       else
         {
-          if (!is_externalCtrlMode()) cease_auto_Tx_after_QSO ();
+          cease_auto_Tx_after_QSO ();
         }
     }
     //                                                                                                  //avt 1/6/24         //avt 1/7/24
@@ -6111,7 +6111,7 @@ void MainWindow::processMessage (DecodedText const& message, Qt::KeyboardModifie
                   if (!is_externalCtrlMode()) logQSOTimer.start(0);
                 }
                 else {
-                  if (!is_externalCtrlMode()) cease_auto_Tx_after_QSO ();
+                  cease_auto_Tx_after_QSO ();
                 }
                 m_ntx=6;
                 ui->txrb6->setChecked(true);
@@ -6183,7 +6183,7 @@ void MainWindow::processMessage (DecodedText const& message, Qt::KeyboardModifie
              && m_baseCall == message_words.at (1)) {
       // dual Fox style message, possibly from MSHV
       if (m_config.prompt_to_log() || m_config.autoLog()) {
-        logQSOTimer.start(0);
+        if (!is_externalCtrlMode()) logQSOTimer.start(0);   //avt 3/27/24
       }
       else {
         //debugToFile("processMsg:  cease tx(5)");
@@ -7014,8 +7014,10 @@ void MainWindow::on_genStdMsgsPushButton_clicked()         //genStdMsgs button
 
 void MainWindow::cease_auto_Tx_after_QSO ()
 {
+  if (is_externalCtrlMode()) return;     //avt 3/26/24
+
   if (SpecOp::FOX != m_specOp && m_mode != "MSK144"
-      && ui->cbAutoSeq->isVisible () && (ui->cbAutoSeq->isEnabled () or is_externalCtrlMode()) && ui->cbAutoSeq->isChecked ())   //avt
+      && ui->cbAutoSeq->isVisible () && ui->cbAutoSeq->isEnabled () && ui->cbAutoSeq->isChecked ())   //avt
     {
       // ensure that auto Tx is disabled even if disable Tx
       // on 73 is not checked, unless in Fox mode where it is allowed
@@ -7026,7 +7028,7 @@ void MainWindow::cease_auto_Tx_after_QSO ()
 
 void MainWindow::on_logQSOButton_clicked()                 //Log QSO button
 {
-  if (!is_externalCtrlMode()) cease_auto_Tx_after_QSO ();
+  cease_auto_Tx_after_QSO ();
 
   if (!m_hisCall.size ()) {
     MessageBox::warning_message (this, tr ("Warning:  DX Call field is empty."));
@@ -11216,7 +11218,7 @@ void MainWindow::remote_configure (QString const& mode, quint32 frequency_tolera
 
 bool MainWindow::is_externalCtrlMode()    //avt 6/7/22
 {
-  return m_externalCtrl && (QString {CONTROLLER_MODES_SUPPORTED}).contains(m_mode);    //avt 6/7/22
+  return m_externalCtrl && (QString {CONTROLLER_MODES_SUPPORTED}).contains(m_mode) && m_specOp == SpecOp::NONE;    //avt 3/26/24
 }
 
 QString MainWindow::WSPR_message()
