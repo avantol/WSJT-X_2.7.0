@@ -626,12 +626,14 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
         debugToFile("setup        Controller initiated");
         m_externalCtrl = true;    //avt 11/19/20 configure for UDP listener special cases
         initExternalCtrl();       //disable Call 1st and Auto buttons 
+
+        setMyContinent();
+        statusUpdate ();
         //QApplication::beep();    //for debug
       }
 
       if (newTxMsgIdx) {          //perform some QSO state action (mostly)
 
-        //tempOnly
         if (newTxMsgIdx == 6 || newTxMsgIdx == 4) {   //set up some kind of CQ, set options
           debugToFile(QString{"setupCq"});   //avt 2/2/24
           //misc setup actions (*affects QSO state*)
@@ -678,7 +680,6 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
           return;
         }
 
-        //tempOnly
         if (newTxMsgIdx == 8) {           //disable Tx
           debugToFile(QString{});
           debugToFile(QString{"disableTx"});
@@ -690,7 +691,6 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
           return;
         }
 
-        //tempOnly
         if (newTxMsgIdx == 9) {           //enable Tx
           debugToFile(QString{});
           debugToFile(QString{"enable Tx"});
@@ -702,7 +702,6 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
           return;
         }
 
-        //tempOnly
         if (newTxMsgIdx == 12) {          //avt 12/31/21 halt tx
           debugToFile(QString{});
           debugToFile(QString{"haltTx"});
@@ -1224,6 +1223,7 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
   m_enableButtonNotify = true;  //avt 1/23/24
   m_debugLog = false;
   m_listenMode = false;  //avt 2/1/24
+  m_myContinent = "";
 
   fixStop();
   VHF_features_enabled(m_config.enable_VHF_features());
@@ -1266,6 +1266,8 @@ MainWindow::MainWindow(QDir const& temp_directory, bool multiple,
 
   QString jpleph = m_config.data_dir().absoluteFilePath("JPLEPH");
   jpl_setup_(const_cast<char *>(jpleph.toLocal8Bit().constData()),256);
+
+  setMyContinent();     //avt 5/6/24
 
 #ifdef WIN32
   // backup libhamlib-4.dll file, so it is still available after the next program update
@@ -2251,6 +2253,7 @@ void MainWindow::on_actionSettings_triggered()               //Setup Dialog
              const_cast<int *> (icw), &m_ncw, (FCL)m_config.my_callsign().length());
     }
     if (m_config.my_callsign () != callsign || m_config.my_grid () != my_grid) {
+      setMyContinent();
       statusUpdate ();
     }
     on_dxGridEntry_textChanged (m_hisGrid); // recalculate distances in case of units change
@@ -2375,7 +2378,6 @@ void MainWindow::on_actionAbout_triggered()                  //Display "About"
 
 void MainWindow::on_autoButton_clicked (bool checked)   //manually or as result of controller command
 {
-  //tempOnly
   if (m_enableButtonNotify) debugToFile(QString{});   //by operator, not from a controller command
   debugToFile(QString{"on_autoButton_clicked    by operator:%1"}.arg(m_enableButtonNotify));
   debugToFile(QString{"             checked:%1 listenMode:%2"}.arg(checked).arg(m_listenMode));
@@ -2398,10 +2400,8 @@ void MainWindow::on_autoButton_clicked (bool checked)   //manually or as result 
   }
 }
 
-//tempOnly
 void MainWindow::process_autoButton (bool checked)   //manually or by controller command
 {
-  //tempOnly
   if (m_enableButtonNotify) debugToFile(QString{});   //by operator, not from a controller command
   debugToFile(QString{"process_autoButton   by operator:%1"}.arg(m_enableButtonNotify));
   debugToFile(QString{"             checked:%1"}.arg(checked));
@@ -2427,8 +2427,8 @@ void MainWindow::process_autoButton (bool checked)   //manually or by controller
 
   if (is_externalCtrlMode() && m_enableButtonNotify) {    //by operator, not from a controller command
       debugToFile(QString{"             statusUpdate m_auto:%1"}.arg(m_auto));
-      statusUpdate (); //avt 1/23/24
   }
+  statusUpdate ();
   m_bEchoTxOK=false;
   if(m_mode=="Echo" and m_auto) {
     m_nclearave=1;
@@ -5210,6 +5210,11 @@ void MainWindow::guiUpdate()
         if (!is_externalCtrlMode() && m_mode != "MSK144") auto_tx_mode (false);    //avt 11/20/20 leave Tx enabled fo UDP listener next action 12/12/21 MSK144 not under external ctrl
         // avt 7/18/22 deletion here 2/13/24
         statusUpdate();      //avt 11/17/20 so that UDP listener is notified
+        if(b and !is_externalCtrlMode()) {
+          m_ntx=6;
+          ui->txrb6->setChecked(true);
+          m_QSOProgress = CALLING;
+        }
       }
     }
 
@@ -5798,10 +5803,20 @@ void MainWindow::doubleClickOnCall(Qt::KeyboardModifiers modifiers)
                  continentB4onBand, CQZoneB4onBand, ITUZoneB4onBand, m_currentBand);
       //debugToFile(QString {"  callB4onBand:%1 countryB4onBand:%2 continentB4onBand:%3"}.arg(callB4onBand).arg(countryB4onBand).arg(continentB4onBand));
 
+    int nAz = -1;
+    int nDkm = -1;
+    if (grid.contains(grid_regexp)) {
+      double utch=0.0;
+      int nEl,nDmiles,nHotAz,nHotABetter;
+      azdist_(const_cast <char *> ((m_config.my_grid () + "      ").left (6).toLatin1 ().constData ()),
+          const_cast <char *> ((grid + "      ").left(6).toLatin1 ().constData ()),&utch,
+          &nAz,&nEl,&nDmiles,&nDkm,&nHotAz,&nHotABetter,(FCL)6,(FCL)6);
+    }
+
       //DX defined as not same continent
       bool isDx = looked_up.continent != m_logBook.countries()->lookup(m_config.my_callsign()).continent;
       //debugToFile(QString {"  isDx:%1 entity_name:%2"}.arg(isDx).arg(looked_up.entity_name));
-      enqueueDecode (message, modifiers & Qt::ControlModifier, false, isDx, !callB4, !countryB4onBand, !countryB4); 
+      enqueueDecode (message, modifiers & Qt::ControlModifier, false, isDx, !callB4onBand, !callB4, !countryB4onBand, !countryB4, looked_up.entity_name, AD1CCty::continent(looked_up.continent), nAz, nDkm);   //avt 5/6/24
       return;                   //avt 1/1/21
     }
     else
@@ -8422,7 +8437,6 @@ void MainWindow::stopTuneATU()
 
 void MainWindow::on_stopTxButton_clicked()                    //Stop Tx
 {
-  //tempOnly
   if (m_enableButtonNotify) debugToFile(QString{});   //by operator, not from a controller command
   debugToFile(QString{"on_stopTxButton_clicked   by operator:%1"}.arg(m_enableButtonNotify));   //avt 2/2/24
   debugToFile(QString{"             autoButton isChecked:%1"}.arg(ui->autoButton->isChecked()));   //avt 2/2/24
@@ -9177,7 +9191,6 @@ void MainWindow::replyToCQ (QTime time, qint32 snr, float delta_time, quint32 de
                             , QString const& mode, QString const& message_text
                             , bool useReply, quint8 modifiers)        //avt 1/1/21
 {
-  //tempOnly
   debugToFile(QString{"replyToCq"});
   if (is_externalCtrlMode()) m_enableButtonNotify = false; //avt 1/29/24
 
@@ -9188,11 +9201,12 @@ void MainWindow::replyToCQ (QTime time, qint32 snr, float delta_time, quint32 de
   auto text = message_text;
   auto ap_pos = text.lastIndexOf (QRegularExpression {R"((?:\?\s)?(?:a[0-9]|q[0-9][0-9]?)$)"});
   if (ap_pos >= 0)
-    {
-      // beware of decodes ending on shorter version of wanted call so
-      // add a space
-      text = text.left (ap_pos).trimmed () + ' ';
-    }
+  {
+    // beware of decodes ending on shorter version of wanted call so
+    // add a space
+    text = text.left (ap_pos).trimmed () + ' ';
+  }
+
   auto message_line = format_string
     .arg (time_string)
     .arg (snr, 3)
@@ -9202,12 +9216,12 @@ void MainWindow::replyToCQ (QTime time, qint32 snr, float delta_time, quint32 de
     .arg (text);
   
   QTextCursor cursor;         //avt 12/21/20 set to null
-  if (is_externalCtrlMode())         //avt 12/21/20
+  if (!is_externalCtrlMode())         //avt 12/21/20
   {
-  QTextCursor start {ui->decodedTextBrowser->document ()};
-  start.movePosition (QTextCursor::End);
-  cursor = ui->decodedTextBrowser->document ()->find (message_line, start, QTextDocument::FindBackward);
-  if (cursor.isNull ())
+    QTextCursor start {ui->decodedTextBrowser->document ()};
+    start.movePosition (QTextCursor::End);
+    cursor = ui->decodedTextBrowser->document ()->find (message_line, start, QTextDocument::FindBackward);
+    if (cursor.isNull ())
     {
       // try again with with -0.0 delta time
       cursor = ui->decodedTextBrowser->document ()->find (format_string
@@ -9234,15 +9248,17 @@ void MainWindow::replyToCQ (QTime time, qint32 snr, float delta_time, quint32 de
           showNormal ();
           raise ();
         }
-      }
-      
-      //if ((text.contains (QRegularExpression {R"(^(CQ |CQDX |QRZ ))"})) || (ui->cbHoldTxFreq->isChecked ())) {
-        // a message we are willing to accept and auto reply to
-        //m_bDoubleClicked = true;
-      //}
 
-      m_bDoubleClicked = true;  //avt 11/15/20 UDP listener simulating dbl-click
-      if (is_externalCtrlMode() && useReply) ui->tx1->setEnabled(true);    //avt 1/1/21 disable skip grid msg, use reply msg instead
+        if ((text.contains (QRegularExpression {R"(^(CQ |CQDX |QRZ ))"})) || (ui->cbHoldTxFreq->isChecked ())) {
+          // a message we are willing to accept and auto reply to
+          m_bDoubleClicked = true;
+        }
+      }
+      else
+      {
+        m_bDoubleClicked = true;  //avt 11/15/20 UDP listener simulating dbl-click
+        if (useReply) ui->tx1->setEnabled(true);    //avt 1/1/21 disable skip grid msg, use reply msg instead
+      }
      
       DecodedText message {message_line};
       Qt::KeyboardModifiers kbmod {modifiers << 24};
@@ -9253,7 +9269,6 @@ void MainWindow::replyToCQ (QTime time, qint32 snr, float delta_time, quint32 de
         QApplication::alert (this);   //avt 11/20/20 UDP listener doesn't want this
       }
       else {
-        //tempOnly
         debugToFile(QString{"replyToCq    statusUpdate"});
         statusUpdate();           //avt 11/19/20 UDP listener needs txFirst info
       }
@@ -9370,10 +9385,20 @@ void MainWindow::postDecode (bool is_new, DecodedText decoded_text)      //avt 1
                  continentB4onBand, CQZoneB4onBand, ITUZoneB4onBand, m_currentBand);
     //debugToFile(QString {"  callB4onBand:%1 countryB4onBand:%2 continentB4onBand:%3"}.arg(callB4onBand).arg(countryB4onBand).arg(continentB4onBand));
 
+    int nAz = -1;
+    int nDkm = -1;
+    if (grid.contains(grid_regexp)) {
+      double utch=0.0;
+      int nEl,nDmiles,nHotAz,nHotABetter;
+      azdist_(const_cast <char *> ((m_config.my_grid () + "      ").left (6).toLatin1 ().constData ()),
+          const_cast <char *> ((grid + "      ").left(6).toLatin1 ().constData ()),&utch,
+          &nAz,&nEl,&nDmiles,&nDkm,&nHotAz,&nHotABetter,(FCL)6,(FCL)6);
+    }
+
     //DX defined as not same continent
     bool isDx = looked_up.continent != m_logBook.countries()->lookup(m_config.my_callsign()).continent; //avt 10/14/21
     //debugToFile(QString {"  isDx:%1 entity_name:%2"}.arg(isDx).arg(looked_up.entity_name));
-    enqueueDecode (decoded_text, false, true, isDx, !callB4onBand, !countryB4onBand, !countryB4);   //avt 8/19/23
+    enqueueDecode (decoded_text, false, true, isDx, !callB4onBand, !callB4, !countryB4onBand, !countryB4, looked_up.entity_name, AD1CCty::continent(looked_up.continent), nAz, nDkm);   //avt 5/4/24
   }
   else
   {
@@ -9381,7 +9406,7 @@ void MainWindow::postDecode (bool is_new, DecodedText decoded_text)      //avt 1
   }
 }
 
-void MainWindow::enqueueDecode (DecodedText decoded_text, bool modifier, bool autoGen, bool isDx, bool isNewCallOnBand, bool isNewCountryOnBand, bool isNewCountry)      //avt 8/19/23
+void MainWindow::enqueueDecode (DecodedText decoded_text, bool modifier, bool autoGen, bool isDx, bool isNewCallOnBand, bool isNewCall, bool isNewCountryOnBand, bool isNewCountry, QString country, QString continent, int az, int dist)      //avt 5/4/24
 {
   QString message = decoded_text.string();      //avt 1/1/21
   auto const& decode = message.trimmed ();
@@ -9397,8 +9422,13 @@ void MainWindow::enqueueDecode (DecodedText decoded_text, bool modifier, bool au
                                , isDx                 //avt 1/3/21
                                , modifier
                                , isNewCallOnBand
+                               , isNewCall            //avt 5/6/24
                                , isNewCountryOnBand
-                               , isNewCountry); //avt 8/19/23
+                               , isNewCountry
+                               , country              //avt 5/4/24
+                               , continent            //avt 5/6/24
+                               , az
+                               , dist);
     }
 }
 
@@ -9944,7 +9974,9 @@ void MainWindow::statusUpdate () const
                                   m_checkCmd,   //avt 12/15/20
                                   m_txHaltClk,  //avt 12/18/21
                                   ui->autoButton->isChecked(), //avt 1/23/24
-                                  m_txEnableClk); //avt 1/28/24 
+                                  m_txEnableClk, //avt 1/28/24 
+                                  m_myContinent, //avt 5/6/24
+                                  m_config.miles());  //avt 5/7/24
 }
 
 void MainWindow::childEvent (QChildEvent * e)
@@ -11391,5 +11423,19 @@ void MainWindow::setCallPriority(QString call)
                  continentB4onBand, CQZoneB4onBand, ITUZoneB4onBand, m_currentBand);
     //debugToFile(QString {"  callB4onBand:%1 countryB4onBand:%2 continentB4onBand:%3 entity_name:%4"}.arg(callB4onBand).arg(countryB4onBand).arg(continentB4onBand).arg(looked_up.entity_name));
 
-    m_checkCmd = QString {"%1,%2,%3,%4,%5"}.arg(call).arg(!callB4).arg(!countryB4onBand).arg(!countryB4).arg(looked_up.entity_name);
+    m_checkCmd = QString {"%1,%2,%3,%4,%5,%6,%7"}.arg(call).arg(!callB4).arg(!callB4onBand).arg(!countryB4onBand).arg(!countryB4).arg(looked_up.entity_name).arg(AD1CCty::continent(looked_up.continent));   //avt 5/6/24
 }
+
+void MainWindow::setMyContinent()   //avt 5/6/24
+{
+    if (m_config.my_callsign() == "")
+    {
+      m_myContinent = "";
+    }
+    else
+    {
+      auto const& looked_up = m_logBook.countries ()->lookup (m_config.my_callsign());
+      m_myContinent = AD1CCty::continent(looked_up.continent);
+    }
+}
+

@@ -65,17 +65,23 @@ public:
                              , bool fast_mode, quint8 special_op_mode, quint32 frequency_tolerance
                              , quint32 tr_period, QString const& configuration_name
                              , QString const& lastTxMsg, quint32 qsoProgress, bool txFirst, bool cQOnly, QString const& genMsg
-                             , bool txHaltClk, bool txEnableState, bool txEnableClk);    //avt 1/28/24
+                             , bool txHaltClk, bool txEnableState, bool txEnableClk, QString const& myContinent, bool metricUnits);    //avt 5/7/24
+  
   Q_SLOT void decode (bool is_new, QTime time, qint32 snr, float delta_time, quint32 delta_frequency
                       , QString const& mode, QString const& message, bool low_confidence
                       , bool off_air);
-//avt 8/22/23
+//avt 5/4/24
   Q_SLOT void enqueue_decode (bool autoGen, QTime time, qint32 snr, float delta_time, quint32 delta_frequency
                       , QString const& mode, QString const& message, bool isDx
                       , bool modifier
                       , bool isNewCallOnBand
+                      , bool isNewCall    //avt 5/6/24
                       , bool isNewCountryOnBand
-                      , bool isNewCountry);
+                      , bool isNewCountry
+                      , QString const& country
+                      , QString const& continent
+                      , int az
+                      , int dist);  //avt 5/7/24
 
   Q_SLOT void WSPR_decode (bool is_new, QTime time, qint32 snr, float delta_time, Frequency
                            , qint32 drift, QString const& callsign, QString const& grid, qint32 power

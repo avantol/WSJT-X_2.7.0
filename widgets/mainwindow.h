@@ -344,6 +344,7 @@ private slots:
 
   void showExternalCtrlDisconnect();     //avt 12/16/21
   void process_autoButton(bool checked); //avt 1/23/24
+  void setMyContinent();    //5/6/24
 
 private:
   Q_SIGNAL void initializeAudioOutputStream (QAudioDeviceInfo,
@@ -585,6 +586,7 @@ private:
   bool    m_enableButtonNotify;   //avt 1/23/24
   bool    m_txEnableClk;          //avt 1/28/24
   bool    m_listenMode;           //avt 2/1/24
+  QString m_myContinent;          //avt 5/6/24
 
   SpecOp  m_specOp;
 
@@ -824,7 +826,7 @@ private:
   void locationChange(QString const& location);
   void replayDecodes ();
   void postDecode (bool is_new, DecodedText decoded_text);  //avt 12/5/20
-  void enqueueDecode (DecodedText decoded_text, bool modifier, bool autoGen, bool isDx, bool isNewCallOnBand, bool isNewCountryOnBand, bool isNewCountry);   //avt 8/19/23
+  void enqueueDecode (DecodedText decoded_text, bool modifier, bool autoGen, bool isDx, bool isNewCallOnBand, bool isNewCall, bool isNewCountryOnBand, bool isNewCountry, QString country, QString continent, int az, int dist);   //avt 5/7/24
   void postWSPRDecode (bool is_new, QStringList message_parts);
   void enable_DXCC_entity (bool on);
   void switch_mode (Mode);

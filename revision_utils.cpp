@@ -60,7 +60,7 @@ QString revision (QString const& scs_rev_string)
       result = revision_from_scs;
     }
 #endif
-  return "174" /*result.trimmed ()*/;  //avt
+  return "185" /*result.trimmed ()*/;  //avt
 }
 
 QString version (bool include_patch)

@@ -1724,7 +1724,7 @@ void Configuration::impl::read_settings ()
   disable_TX_on_73_ = settings_->value ("73TxDisable", false).toBool ();
   force_call_1st_ = settings_->value ("ForceCallFirst", false).toBool ();
   alternate_bindings_ = settings_->value ("AlternateBindings", false).toBool ();
-  watchdog_ = 30; //avt settings_->value ("TxWatchdog", 6).toInt ();
+  watchdog_ = settings_->value ("TxWatchdog", 6).toInt ();
   TX_messages_ = settings_->value ("Tx2QSO", true).toBool ();
   enable_VHF_features_ = settings_->value("VHFUHF",false).toBool ();
   decode_at_52s_ = settings_->value("Decode52",false).toBool ();
